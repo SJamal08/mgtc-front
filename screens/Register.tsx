@@ -12,9 +12,17 @@ import Icon from 'react-native-vector-icons/AntDesign';
 import React, {useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import AuthService from '../services/AuthService';
+import {User} from '../model/User';
+import UserRepository from '../repositories/UserRepository';
+import {FirebaseAuthTypes} from '@react-native-firebase/auth';
+import {useDispatch} from 'react-redux';
+import {signupUser} from '../redux/userSlice';
+import AsyncStorage from '@react-native-community/async-storage';
+import { setUser } from '../redux/newUserSlice';
 
 const Register = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
 
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
@@ -22,8 +30,6 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [messageError, setMessageError] = useState('');
-  const [isValidFirstname, setisValidFirstname] = useState(false);
-  const [isValidLastname, setisValidLastname] = useState(false);
   const [isValidUsername, setisValidUsername] = useState(false);
   const [isValidEmail, setisValidEmail] = useState(false);
   const [isValidPassword, setisValidPassword] = useState(false);
@@ -76,8 +82,19 @@ const Register = () => {
     setIsValidPasswordConfirm(boolPassword);
   };
 
-  const handleRegistration = () => {
-    AuthService.firebaseRegistration(email, password);
+  const handleRegistration = async () => {
+    try {
+      const creds = await AuthService.firebaseRegistration(email, password);
+      if (creds) {
+        const user: User = new User(creds.user.uid, username, creds.user.email);
+        const userCreated: User = await UserRepository.createUser(user);
+        dispatch(setUser(userCreated));
+        navigation.navigate('Home');
+        AsyncStorage.setItem('user', JSON.stringify(userCreated));
+      }
+    } catch (error) {
+      console.log('error');
+    }
   };
   return (
     <ScrollView>
@@ -187,14 +204,12 @@ const Register = () => {
             styles.button,
             {
               backgroundColor:
-                isValidFirstname &&
-                isValidLastname &&
                 isValidUsername &&
                 isValidEmail &&
                 isValidPassword &&
                 isValidPasswordConfirm
                   ? 'orange'
-                  : 'gray',
+                  : '#DCDCDC',
             },
           ]}
           onPress={handleRegistration}>
@@ -228,7 +243,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 25,
-    color: 'white',
+    color: 'black',
     fontWeight: 'bold',
     fontStyle: 'normal',
     textTransform: 'uppercase',
@@ -257,16 +272,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   textForLogin: {
-    color: 'white',
+    color: 'black',
   },
   titleCondition: {
     textAlign: 'center',
-    color: 'white',
+    color: 'black',
     fontSize: 20,
   },
   textCondition: {
     textAlign: 'justify',
-    color: 'white',
+    color: 'black',
     fontSize: 15,
   },
 });

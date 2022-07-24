@@ -1,22 +1,33 @@
-import auth from '@react-native-firebase/auth';
+import auth, {FirebaseAuthTypes} from '@react-native-firebase/auth';
 
 export default class AuthService {
-  public static firebaseRegistration(email: string, password: string): any {
-    auth()
-      .createUserWithEmailAndPassword(email, password)
-      .then(() => {
-        console.log('User account created & signed in!');
-      })
-      .catch(error => {
-        if (error.code === 'auth/email-already-in-use') {
-          console.log('That email address is already in use!');
-        }
+  public static firebaseRegistration(email: string, password: string) {
+    try {
+      return auth().createUserWithEmailAndPassword(email, password);
+    } catch (error) {
+      console.log('rien');
+      //   if (error.code === 'auth/email-already-in-use') {
+      //     console.log('That email address is already in use!');
+      //   }
 
-        if (error.code === 'auth/invalid-email') {
-          console.log('That email address is invalid!');
-        }
+      //   if (error.code === 'auth/invalid-email') {
+      //     console.log('That email address is invalid!');
+      //   }
+    }
+  }
 
-        console.error(error);
-      });
+  public static firebaseLogin(email: string, password: string) {
+    try {
+      return auth().signInWithEmailAndPassword(email, password);
+    } catch (error) {
+      console.log('rien');
+      //   if (error.code === 'auth/email-already-in-use') {
+      //     console.log('That email address is already in use!');
+      //   }
+
+      //   if (error.code === 'auth/invalid-email') {
+      //     console.log('That email address is invalid!');
+      //   }
+    }
   }
 }

@@ -8,14 +8,17 @@
  * @format
  */
 
-import React, {type PropsWithChildren} from 'react';
-import {SafeAreaView, StyleSheet} from 'react-native';
+import React from 'react';
 import MyStackNavigator from './navigation/MyStackNavigator';
+import {Provider} from 'react-redux';
+import {store} from './store';
 
 const App = () => {
-  return <MyStackNavigator />;
+  return (
+    <Provider store={store}>
+      <MyStackNavigator />
+    </Provider>
+  );
 };
-
-const styles = StyleSheet.create({});
 
 export default App;

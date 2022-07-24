@@ -8,8 +8,14 @@ import {
   View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
+import {useAppDispatch, useAppSelector} from '../reduxhooks';
+import {selectUser, setUser} from '../redux/newUserSlice';
+import UserRepository from '../repositories/UserRepository';
+import {User} from '../model/User';
+import AuthService from '../services/AuthService';
+import AsyncStorage from '@react-native-community/async-storage';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -21,6 +27,22 @@ const Login = () => {
   const [messageError, setMessageError] = useState('');
   const navigation = useNavigation();
 
+  const user = useAppSelector(selectUser);
+
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    const tryAutoLogin = async () => {
+      const userInStorage = await AsyncStorage.getItem('user');
+      if (userInStorage) {
+        const userStored = JSON.parse(userInStorage);
+        dispatch(setUser(userStored));
+        navigation.navigate('Home');
+      }
+    };
+    tryAutoLogin();
+  }, [dispatch, navigation]);
+
   const handleIsValidEmail = (text: string) => {
     const boolEmail = text.trim().length > 0;
     setisValidEmail(boolEmail);
@@ -29,6 +51,21 @@ const Login = () => {
   const handleIsValidPassword = (text: string) => {
     const boolPassword = text.trim().length > 0;
     setisValidPassword(boolPassword);
+  };
+
+  const handleLogin = async () => {
+    try {
+      const creds = await AuthService.firebaseLogin(email, password);
+      if (creds) {
+        const userLogged: User = await UserRepository.getUser(creds.user.uid);
+
+        dispatch(setUser(userLogged));
+        navigation.navigate('Home');
+        AsyncStorage.setItem('user', JSON.stringify(userLogged));
+      }
+    } catch (error) {
+      console.log('error');
+    }
   };
   return (
     <View style={styles.container}>
@@ -80,10 +117,10 @@ const Login = () => {
           styles.button,
           {
             backgroundColor:
-              isValidemail && isValidPassword ? 'orange' : 'white',
+              isValidemail && isValidPassword ? 'orange' : '#DCDCDC',
           },
         ]}
-        onPress={() => console.log('login')}
+        onPress={handleLogin}
         disabled={!(isValidemail && isValidPassword)}>
         {loading ? (
           <ActivityIndicator size="small" color="gray" />
@@ -108,12 +145,15 @@ const styles = StyleSheet.create({
   container: {
     display: 'flex',
     flexDirection: 'column',
-    // backgroundColor: 'gray',
+    height: Dimensions.get('screen').height / 1.2,
+    width: Dimensions.get('screen').width,
     alignItems: 'center',
+    alignSelf: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: 25,
-    color: 'white',
+    color: 'black',
     fontWeight: 'bold',
     fontStyle: 'normal',
     textTransform: 'uppercase',
@@ -142,6 +182,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   textForRegister: {
-    color: 'white',
+    color: 'black',
   },
 });
